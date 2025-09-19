@@ -3,7 +3,7 @@ services:
     name: car-price-predictor
     env: python
     plan: free
-    rootDirectory: "Car price predictor pk"
+    rootDir: "Car price predictor pk"
     autoDeploy: true
     buildCommand: |
       pip install --upgrade pip
