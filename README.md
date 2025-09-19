@@ -235,11 +235,17 @@ git push heroku main
 </details>
 
 <details>
-<summary>Render Deployment</summary>
+<summary>Render Deployment (Blueprint)</summary>
 
-1. Connect repo to [Render](https://render.com)
-2. Set build command: `pip install -r requirements.txt`
-3. Set start command: `streamlit run streamlit_app.py --server.port=$PORT --server.address=0.0.0.0`
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/pk1519/Used-Car-Price-Predictor)
+
+- This repository includes a `render.yaml` at the root with `rootDir: "Car price predictor pk"`.
+- Click the button above or on Render choose "New → Blueprint" and select this repo.
+- Build command: `pip install --upgrade pip && pip install -r requirements.txt`
+- Start command: `streamlit run streamlit_app.py --server.port=$PORT --server.address=0.0.0.0`
+- Environment variable: `PYTHON_VERSION=3.11.9` (set in `render.yaml`).
+- Requirements file location: `Car price predictor pk/requirements.txt`.
+  The `rootDir` ensures the build runs in this subfolder so `pip install -r requirements.txt` works.
 </details>
 
 ## 🔧 API Reference
