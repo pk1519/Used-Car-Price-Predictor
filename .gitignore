@@ -1,0 +1,56 @@
+# Global Python ignores
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.env
+.venv/
+venv/
+ENV/
+.env.bak/
+venv.bak/
+
+# Build/Dist
+build/
+dist/
+.eggs/
+*.egg-info/
+*.egg
+pip-wheel-metadata/
+
+# Cache/Reports
+.cache/
+.tox/
+.nox/
+coverage.xml
+*.cover
+*.py,cover
+.pytest_cache/
+.mypy_cache/
+.dmypy.json
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Logs/Temp
+*.log
+*.tmp
+*.temp
+/tmp/
+
+# IDE/OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Streamlit local state
+.streamlit/
+!.streamlit/config.toml
+
+# Project-specific
+# Ignore any local envs inside subfolders as well
+**/env/
+**/venv/
+**/.venv/

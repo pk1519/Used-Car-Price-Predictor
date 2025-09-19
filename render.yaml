@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: car-price-predictor
+    env: python
+    plan: free
+    rootDirectory: "Car price predictor pk"
+    autoDeploy: true
+    buildCommand: |
+      pip install --upgrade pip
+      pip install -r requirements.txt
+    startCommand: |
+      streamlit run streamlit_app.py --server.port=$PORT --server.address=0.0.0.0
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
