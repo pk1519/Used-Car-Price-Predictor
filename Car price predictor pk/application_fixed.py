@@ -20,12 +20,15 @@ for column in categorical_columns:
     le.fit(car[column])
     label_encoders[column] = le
 
-# Load the model
+# Load the model (try default, then fixed filename)
 try:
     model = pickle.load(open('LinearRegressionModel.pkl', 'rb'))
-except:
-    print("Error loading model. Please train the model first.")
-    model = None
+except Exception:
+    try:
+        model = pickle.load(open('LinearRegressionModel_Fixed.pkl', 'rb'))
+    except Exception:
+        print("Error loading model. Please train the model first (LinearRegressionModel.pkl or LinearRegressionModel_Fixed.pkl).")
+        model = None
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -60,16 +63,21 @@ def safe_predict_price(name, company, year, kms_driven, fuel_type):
         if fuel_type not in label_encoders['fuel_type'].classes_:
             fuel_type = 'Petrol'  # Default to Petrol
         
-        # Encode categorical variables
-        name_encoded = label_encoders['name'].transform([name])[0]
-        company_encoded = label_encoders['company'].transform([company])[0]
-        fuel_type_encoded = label_encoders['fuel_type'].transform([fuel_type])[0]
-        
-        # Create feature array
-        features = np.array([[name_encoded, company_encoded, int(year), int(kms_driven), fuel_type_encoded]])
-        
-        # Make prediction
-        prediction = model.predict(features)[0]
+        # First try predicting with a DataFrame for models/pipelines that expect column names
+        try:
+            input_df = pd.DataFrame(
+                [[name, company, int(year), int(kms_driven), fuel_type]],
+                columns=['name', 'company', 'year', 'kms_driven', 'fuel_type']
+            )
+            prediction = model.predict(input_df)[0]
+        except Exception:
+            # Fallback: encode categoricals and predict with numeric numpy array
+            name_encoded = label_encoders['name'].transform([name])[0]
+            company_encoded = label_encoders['company'].transform([company])[0]
+            fuel_type_encoded = label_encoders['fuel_type'].transform([fuel_type])[0]
+
+            features = np.array([[name_encoded, company_encoded, int(year), int(kms_driven), fuel_type_encoded]])
+            prediction = model.predict(features)[0]
         
         # Apply business logic to ensure reasonable prices
         # Adjust based on year (older cars should be cheaper)

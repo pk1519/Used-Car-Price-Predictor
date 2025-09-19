@@ -52,27 +52,36 @@ def load_data():
 @st.cache_resource
 def load_model_and_encoders():
     """Load and cache the model and encoders"""
+    # Try to load either of the supported model filenames
     try:
-        # Try to load the model
         model = pickle.load(open('LinearRegressionModel.pkl', 'rb'))
-        
-        # Create label encoders from the data
-        car_data = load_data()
-        if car_data is not None:
-            label_encoders = {}
-            categorical_columns = ['name', 'company', 'fuel_type']
-            
-            for column in categorical_columns:
-                le = LabelEncoder()
-                le.fit(car_data[column])
-                label_encoders[column] = le
-            
-            return model, label_encoders
-        else:
-            return None, None
-            
     except FileNotFoundError:
-        st.error("❌ Model file not found! Please ensure LinearRegressionModel.pkl is in the same directory.")
+        try:
+            model = pickle.load(open('LinearRegressionModel_Fixed.pkl', 'rb'))
+        except FileNotFoundError:
+            st.error("❌ Model file not found! Please ensure LinearRegressionModel.pkl or LinearRegressionModel_Fixed.pkl is in the same directory.")
+            return None, None
+
+    # Try to load saved label encoders for consistent mappings
+    try:
+        label_encoders = pickle.load(open('LabelEncoders.pkl', 'rb'))
+        return model, label_encoders
+    except Exception:
+        pass
+
+    # Fallback: create label encoders from the data
+    car_data = load_data()
+    if car_data is not None:
+        label_encoders = {}
+        categorical_columns = ['name', 'company', 'fuel_type']
+        
+        for column in categorical_columns:
+            le = LabelEncoder()
+            le.fit(car_data[column])
+            label_encoders[column] = le
+        
+        return model, label_encoders
+    else:
         return None, None
 
 def safe_predict_price(model, label_encoders, car_data, name, company, year, kms_driven, fuel_type):
@@ -102,16 +111,21 @@ def safe_predict_price(model, label_encoders, car_data, name, company, year, kms
             fuel_type = 'Petrol'  # Default to Petrol
             st.warning("⚠️ Fuel type not found. Using: Petrol")
         
-        # Encode categorical variables
-        name_encoded = label_encoders['name'].transform([name])[0]
-        company_encoded = label_encoders['company'].transform([company])[0]
-        fuel_type_encoded = label_encoders['fuel_type'].transform([fuel_type])[0]
-        
-        # Create feature array
-        features = np.array([[name_encoded, company_encoded, int(year), int(kms_driven), fuel_type_encoded]])
-        
-        # Make prediction
-        prediction = model.predict(features)[0]
+        # First try predicting with a DataFrame for models/pipelines that expect column names
+        try:
+            input_df = pd.DataFrame(
+                [[name, company, int(year), int(kms_driven), fuel_type]],
+                columns=['name', 'company', 'year', 'kms_driven', 'fuel_type']
+            )
+            prediction = model.predict(input_df)[0]
+        except Exception:
+            # Fallback: encode categoricals and predict with numeric numpy array
+            name_encoded = label_encoders['name'].transform([name])[0]
+            company_encoded = label_encoders['company'].transform([company])[0]
+            fuel_type_encoded = label_encoders['fuel_type'].transform([fuel_type])[0]
+
+            features = np.array([[name_encoded, company_encoded, int(year), int(kms_driven), fuel_type_encoded]])
+            prediction = model.predict(features)[0]
         
         # Apply business logic to ensure reasonable prices
         current_year = 2024

@@ -123,15 +123,21 @@ def predict_price(name, company, year, kms_driven, fuel_type):
             fuel_type = 'Petrol'
         
         # Encode the input
-        name_encoded = label_encoders['name'].transform([name])[0]
-        company_encoded = label_encoders['company'].transform([company])[0]
-        fuel_type_encoded = label_encoders['fuel_type'].transform([fuel_type])[0]
-        
-        # Create feature array
-        features = np.array([[name_encoded, company_encoded, year, kms_driven, fuel_type_encoded]])
-        
-        # Make prediction
-        prediction = model.predict(features)[0]
+        # Try predicting with a DataFrame first (for models/pipelines that expect column names)
+        try:
+            input_df = pd.DataFrame(
+                [[name, company, int(year), int(kms_driven), fuel_type]],
+                columns=['name', 'company', 'year', 'kms_driven', 'fuel_type']
+            )
+            prediction = model.predict(input_df)[0]
+        except Exception:
+            # Fallback: use label-encoded numeric features (for plain LinearRegression models)
+            name_encoded = label_encoders['name'].transform([name])[0]
+            company_encoded = label_encoders['company'].transform([company])[0]
+            fuel_type_encoded = label_encoders['fuel_type'].transform([fuel_type])[0]
+
+            features = np.array([[name_encoded, company_encoded, int(year), int(kms_driven), fuel_type_encoded]])
+            prediction = model.predict(features)[0]
         
         # Ensure prediction is positive and reasonable
         if prediction < 30000:  # Minimum reasonable car price
