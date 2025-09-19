@@ -2,9 +2,21 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import pickle
+import sys
+import importlib
 from sklearn.preprocessing import LabelEncoder
 import plotly.express as px
 import plotly.graph_objects as go
+
+# Compatibility shim for models pickled with NumPy 2.x referencing 'numpy._core'
+try:
+    import numpy._core  # noqa: F401
+except ModuleNotFoundError:
+    try:
+        import numpy.core as _np_core  # type: ignore
+        sys.modules['numpy._core'] = _np_core  # alias for unpickling
+    except Exception:
+        pass
 
 # Set page config
 st.set_page_config(
